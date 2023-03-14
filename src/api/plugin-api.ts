@@ -14,6 +14,7 @@ import {
     defaultLinkHandler,
     executeCalendar,
     executeList,
+    executeMap,
     executeTable,
     executeTask,
     IdentifierMeaning,
@@ -32,8 +33,10 @@ import { parseQuery } from "query/parse";
 import { tryOrPropogate } from "util/normalize";
 import { Query } from "query/query";
 import { DataviewCalendarRenderer } from "ui/views/calendar-view";
+import { createMapView } from "ui/views/map-view";
 import { DataviewJSRenderer } from "ui/views/js-view";
 import { markdownList, markdownTable, markdownTaskList } from "ui/export/markdown";
+import { Coordinate } from "expression/parse";
 
 /** Asynchronous API calls related to file / system IO. */
 export class DataviewIOApi {
@@ -271,6 +274,11 @@ export class DataviewApi {
 
         const header = query.value.header;
         switch (header.type) {
+            case "map":
+                const results = await executeMap(query.value, this.index, originFile ?? "", this.settings);
+                if (!results.successful) return results.cast();
+
+                return Result.success({ type: "map", values: results.value.data });
             case "calendar":
                 const cres = await executeCalendar(query.value, this.index, originFile ?? "", this.settings);
                 if (!cres.successful) return cres.cast();
@@ -331,6 +339,8 @@ export class DataviewApi {
                 return Result.success(this.markdownTable(result.value.headers, result.value.values, settings));
             case "task":
                 return Result.success(this.markdownTaskList(result.value.values, settings));
+            case "map":
+                return Result.failure("Cannot render map queries to markdown.");
             case "calendar":
                 return Result.failure("Cannot render calendar queries to markdown.");
         }
@@ -428,6 +438,11 @@ export class DataviewApi {
                     this.settings,
                     this.app
                 );
+
+                component.addChild(childComponent);
+                break;
+            case "map":
+                childComponent = createMapView(init, query as Query, filePath);
 
                 component.addChild(childComponent);
                 break;
@@ -584,9 +599,18 @@ export type CalendarResult = {
         value?: Literal[];
     }[];
 };
+/** The result of executing a map query. */
+export type MapResult = {
+    type: "map";
+    values: {
+        coordinate: Coordinate;
+        link: Link;
+        value?: Literal[];
+    }[];
+};
 
 /** The result of executing a query of some sort. */
-export type QueryResult = TableResult | ListResult | TaskResult | CalendarResult;
+export type QueryResult = TableResult | ListResult | TaskResult | CalendarResult | MapResult;
 
 /** Settings when querying the dataview API. */
 export type QueryApiSettings = {

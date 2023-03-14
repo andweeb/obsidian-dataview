@@ -1,3 +1,4 @@
+import { Coordinate } from "expression/parse";
 import { DateTime, Duration } from "luxon";
 import { DEFAULT_QUERY_SETTINGS, QuerySettings } from "settings";
 import { getFileTitle, normalizeHeaderForLink, renderMinimalDuration } from "util/normalize";
@@ -9,6 +10,7 @@ export type LiteralType =
     | "boolean"
     | "number"
     | "string"
+    | "coordinate"
     | "date"
     | "duration"
     | "link"
@@ -23,6 +25,7 @@ export type Literal =
     | boolean
     | number
     | string
+    | Coordinate
     | DateTime
     | Duration
     | Link
@@ -69,6 +72,7 @@ export type WrappedLiteral =
     | LiteralWrapper<"string">
     | LiteralWrapper<"number">
     | LiteralWrapper<"boolean">
+    | LiteralWrapper<"coordinate">
     | LiteralWrapper<"date">
     | LiteralWrapper<"duration">
     | LiteralWrapper<"link">
@@ -102,6 +106,8 @@ export namespace Values {
             case "number":
             case "boolean":
                 return "" + wrapped.value;
+            case "coordinate":
+                return wrapped.value;
             case "html":
                 return wrapped.value.outerHTML;
             case "widget":
@@ -141,6 +147,7 @@ export namespace Values {
         else if (isNumber(val)) return { type: "number", value: val };
         else if (isString(val)) return { type: "string", value: val };
         else if (isBoolean(val)) return { type: "boolean", value: val };
+        else if (isCoordinate(val)) return { type: "coordinate", value: val };
         else if (isDuration(val)) return { type: "duration", value: val };
         else if (isDate(val)) return { type: "date", value: val };
         else if (isWidget(val)) return { type: "widget", value: val };
@@ -257,6 +264,7 @@ export namespace Values {
                 }
 
                 return 0;
+            case "coordinate":
             case "widget":
             case "html":
             case "function":
@@ -293,6 +301,7 @@ export namespace Values {
                 return wrapped.value.length > 0;
             case "null":
                 return false;
+            case "coordinate":
             case "html":
             case "widget":
             case "function":
@@ -321,6 +330,10 @@ export namespace Values {
 
     export function isNumber(val: any): val is number {
         return typeof val == "number";
+    }
+
+    export function isCoordinate(val: any): val is Coordinate {
+        return 'latitude' in val && 'longitude' in val;
     }
 
     export function isDate(val: any): val is DateTime {

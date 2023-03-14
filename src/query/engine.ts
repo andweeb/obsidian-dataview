@@ -5,12 +5,13 @@ import { FullIndex } from "data-index/index";
 import { Context, LinkHandler } from "expression/context";
 import { resolveSource, Datarow, matchingSourcePaths } from "data-index/resolver";
 import { DataObject, Link, Literal, Values, Grouping, Widgets } from "data-model/value";
-import { CalendarQuery, ListQuery, Query, QueryOperation, TableQuery } from "query/query";
+import { CalendarQuery, ListQuery, MapQuery, Query, QueryOperation, TableQuery } from "query/query";
 import { Result } from "api/result";
 import { Field, Fields } from "expression/field";
 import { QuerySettings } from "settings";
 import { DateTime } from "luxon";
 import { SListItem } from "data-model/serialized/markdown";
+import { Coordinate } from "expression/parse";
 
 function iden<T>(x: T): T {
     return x;
@@ -504,4 +505,43 @@ export async function executeCalendar(
 export interface CalendarExecution {
     core: CoreExecution;
     data: { date: DateTime; link: Link; value?: Literal[] }[];
+}
+
+/** Execute a map-based query, returning the final results. */
+export async function executeMap(
+    query: Query,
+    index: FullIndex,
+    origin: string,
+    settings: QuerySettings
+): Promise<Result<MapExecution, string>> {
+    // Start by collecting all of the files that match the 'from' queries.
+    let fileset = await resolveSource(query.source, index, origin);
+    if (!fileset.successful) return Result.failure(fileset.error);
+
+    // Extract information about the origin page to add to the root context.
+    let rootContext = new Context(defaultLinkHandler(index, origin), settings, {
+        this: index.pages.get(origin)?.serialize(index) ?? {},
+    });
+
+    let targetField = (query.header as MapQuery).field.field;
+    let fields: Record<string, Field> = {
+        target: targetField,
+        link: Fields.indexVariable("file.link"),
+    };
+
+    return executeCoreExtract(fileset.value, rootContext, query.operations, fields).map(core => {
+        let data = core.data.map(p =>
+            iden({
+                coordinate: p.data["target"] as Coordinate,
+                link: p.data["link"] as Link,
+            })
+        );
+
+        return { core, data };
+    });
+}
+
+export interface MapExecution {
+    core: CoreExecution;
+    data: { coordinate: Coordinate; link: Link; value?: Literal[] }[];
 }

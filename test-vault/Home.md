@@ -5,3 +5,5 @@ Home
 [[example lists]]
 
 [[example tasks]]
+
+[[example maps]]

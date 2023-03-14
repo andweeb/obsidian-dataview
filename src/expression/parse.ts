@@ -148,6 +148,11 @@ export type PostfixFragment =
     | { type: "index"; field: Field }
     | { type: "function"; fields: Field[] };
 
+export interface Coordinate {
+    latitude: number;
+    longitude: number;
+}
+
 export interface ExpressionLanguage {
     number: number;
     string: string;
@@ -164,6 +169,7 @@ export interface ExpressionLanguage {
     durationType: keyof typeof DURATION_TYPES;
     duration: Duration;
     rawNull: string;
+    coordinate: Coordinate;
 
     binaryPlusMinus: BinaryOp;
     binaryMulDiv: BinaryOp;
@@ -225,6 +231,18 @@ export const EXPRESSION = P.createLanguage<ExpressionLanguage>({
         P.regexp(/-?[0-9]+(\.[0-9]+)?/)
             .map(str => Number.parseFloat(str))
             .desc("number"),
+
+    // TODO
+    coordinate: q => {
+        return P.regexp(/-?[0-9]+(\.[0-9]+)?/)
+            .map(str => {
+                return {
+                    latitude: 123,
+                    longitude: 123
+                };
+            })
+            .desc("geographic coordinate")
+    },
 
     // A quote-surrounded string which supports escape characters ('\').
     string: q =>

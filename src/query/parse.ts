@@ -66,9 +66,9 @@ function stripNewlines(text: string): string {
 export const QUERY_LANGUAGE = P.createLanguage<QueryLanguageTypes>({
     // Simple atom parsing, like words, identifiers, numbers.
     queryType: q =>
-        P.alt<string>(P.regexp(/TABLE|LIST|TASK|CALENDAR/i))
+        P.alt<string>(P.regexp(/TABLE|LIST|TASK|CALENDAR|MAP/i))
             .map(str => str.toLowerCase() as QueryType)
-            .desc("query type ('TABLE', 'LIST', 'TASK', or 'CALENDAR')"),
+            .desc("query type ('TABLE', 'LIST', 'TASK', 'CALENDAR', or 'MAP')"),
     explicitNamedField: q =>
         P.seqMap(
             EXPRESSION.field.skip(P.whitespace),
@@ -135,11 +135,19 @@ export const QUERY_LANGUAGE = P.createLanguage<QueryLanguageTypes>({
                                 field,
                             } as QueryHeader;
                         });
+                    case "map":
+                        return P.seqMap(q.namedField, field => {
+                            return {
+                                type: "map",
+                                showId: true,
+                                field,
+                            } as QueryHeader;
+                        });
                     default:
                         return P.fail(`Unrecognized query type '${qtype}'`);
                 }
             })
-            .desc("TABLE or LIST or TASK or CALENDAR"),
+            .desc("TABLE or LIST or TASK or CALENDAR or MAP"),
     fromClause: q => P.seqMap(P.regexp(/FROM/i), P.whitespace, EXPRESSION.source, (_1, _2, source) => source),
     whereClause: q =>
         P.seqMap(P.regexp(/WHERE/i), P.whitespace, EXPRESSION.field, (where, _, field) => {

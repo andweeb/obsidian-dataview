@@ -763,6 +763,16 @@ export namespace DefaultFunctions {
             type: link.type,
         }))
         .build();
+
+    /** Coordinates constructor function. */
+    export const coordinate = new FunctionBuilder("coordinate")
+        .add2("number", "number", (latitude, longitude) => {
+            let parsedCoordinate = EXPRESSION.coordinate.parse(`${latitude},${longitude}`);
+            return parsedCoordinate.status
+                ? parsedCoordinate.value
+                : null;
+        })
+        .build();
 }
 
 /** Default function implementations for the expression evaluator. */
@@ -781,6 +791,7 @@ export const DEFAULT_FUNCTIONS: Record<string, FunctionImpl> = {
     string: DefaultFunctions.string,
     object: DefaultFunctions.object,
     typeof: DefaultFunctions.typeOf,
+    coordinate: DefaultFunctions.coordinate,
 
     // Math Operations.
     round: DefaultFunctions.round,

@@ -53,6 +53,7 @@
     "emoji-regex": "^10.0.0",
     "localforage": "^1.10.0",
     "luxon": "^3.2.0",
+    "mapbox-gl": "^2.10.0",
     "obsidian-calendar-ui": "^0.3.12",
     "papaparse": "^5.3.1",
     "parsimmon": "^1.18.0",

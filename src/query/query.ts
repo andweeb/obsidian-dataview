@@ -3,7 +3,7 @@ import { Source } from "data-index/source";
 import { Field } from "expression/field";
 
 /** The supported query types (corresponding to view types). */
-export type QueryType = "list" | "table" | "task" | "calendar";
+export type QueryType = "list" | "table" | "task" | "calendar" | "map";
 
 /** Fields used in the query portion. */
 export interface NamedField {
@@ -66,7 +66,14 @@ export interface CalendarQuery {
     field: NamedField;
 }
 
-export type QueryHeader = ListQuery | TableQuery | TaskQuery | CalendarQuery;
+/** A query which renders a collection of notes in a map view. */
+export interface MapQuery {
+    type: "map";
+    /** The date field that we'll be grouping notes by for the calendar view */
+    field: NamedField;
+}
+
+export type QueryHeader = ListQuery | TableQuery | TaskQuery | CalendarQuery | MapQuery;
 
 /** A step which only retains rows whose 'clause' field is truthy. */
 export interface WhereStep {
